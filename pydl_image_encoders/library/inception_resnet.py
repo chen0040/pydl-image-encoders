@@ -36,7 +36,7 @@ def download_pretrained_model(data_dir_path):
     tar.close()
 
 
-class InceptionResNetImageEnoder(object):
+class InceptionResNetImageEncoder(object):
 
     def __init__(self):
         input_tensor = tf.placeholder(tf.float32, shape=(None, 299, 299, 3), name='input_image')
@@ -90,7 +90,7 @@ def main():
     data_dir_path = '../demo/very_large_data'
     img_dir_path = '../demo/data/images'
     sample_images = [img_dir_path + '/dog.jpg', img_dir_path + '/cat.jpg']
-    encoder = InceptionResNetImageEnoder()
+    encoder = InceptionResNetImageEncoder()
     encoder.load_model(data_dir_path)
     for image_path in sample_images:
         label, class_id, predict_score = encoder.predict_image_file(image_path)
