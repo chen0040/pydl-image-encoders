@@ -5,6 +5,7 @@ from __future__ import print_function
 import tensorflow as tf
 
 from pydl_image_encoders.library.download_utils import reporthook
+from pydl_image_encoders.library.tf.imagenet_utils import imagenet_labels
 
 slim = tf.contrib.slim
 from PIL import Image
@@ -60,23 +61,30 @@ class InceptionResNetImageEnoder(object):
         im = im.reshape(-1, 299, 299, 3)
         predict_values, logit_values = self.sess.run([self.end_points['Predictions'], self.logits],
                                                      feed_dict={self.input_tensor: im})
-        return np.argmax(predict_values), np.max(predict_values)  # , np.argmax(logit_values)
+        predicted_index = np.argmax(predict_values)
+        predicted_label = imagenet_labels[predicted_index]
+        return predicted_label, predicted_index, np.max(predict_values)  # , np.argmax(logit_values)
 
     def predict_image_file(self, image_path):
         im = Image.open(image_path).resize((299, 299))
         im = np.array(im)
         return self.predict_image(im)
 
-    def encode_image(self, im):
+    def encode_image(self, im, include_top=None):
+        if include_top is None:
+            include_top = True
         im = im.reshape(-1, 299, 299, 3)
-        predict_values, logit_values = self.sess.run([self.end_points['Predictions'], self.logits],
-                                                     feed_dict={self.input_tensor: im})
-        return predict_values
+        predict_values, pre_logits, logit_values = self.sess.run(
+            [self.end_points['Predictions'], self.end_points['PreLogitsFlatten'], self.logits],
+            feed_dict={self.input_tensor: im})
+        return predict_values if include_top else pre_logits
 
-    def encode_image_file(self, image_path):
+    def encode_image_file(self, image_path, include_top=None):
+        if include_top is None:
+            include_top = True
         im = Image.open(image_path).resize((299, 299))
         im = np.array(im)
-        return self.encode_image(im)
+        return self.encode_image(im, include_top)
 
 
 def main():
@@ -86,8 +94,10 @@ def main():
     encoder = InceptionResNetImageEnoder()
     encoder.load_model(data_dir_path)
     for image_path in sample_images:
-        class_id, predict_score = encoder.predict_image_file(image_path)
-        print(class_id, predict_score)
+        label, class_id, predict_score = encoder.predict_image_file(image_path)
+        print(encoder.encode_image_file(image_path, True).shape)
+        print(encoder.encode_image_file(image_path, False).shape)
+        print(label, class_id, predict_score)
 
 
 if __name__ == '__main__':
