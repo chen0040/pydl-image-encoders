@@ -39,7 +39,6 @@ def download_pretrained_model(data_dir_path):
 class InceptionResNetImageEnoder(object):
 
     def __init__(self):
-        self.sess = None
         input_tensor = tf.placeholder(tf.float32, shape=(None, 299, 299, 3), name='input_image')
         self.input_tensor = input_tensor
         scaled_input_tensor = tf.scalar_mul((1.0 / 255), input_tensor)
@@ -77,7 +76,7 @@ class InceptionResNetImageEnoder(object):
         predict_values, pre_logits, logit_values = self.sess.run(
             [self.end_points['Predictions'], self.end_points['PreLogitsFlatten'], self.logits],
             feed_dict={self.input_tensor: im})
-        return predict_values if include_top else pre_logits
+        return predict_values[0, :] if include_top else pre_logits[0, :]
 
     def encode_image_file(self, image_path, include_top=None):
         if include_top is None:
